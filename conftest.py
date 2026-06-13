@@ -17,37 +17,20 @@ def orders_api() -> OrdersApi:
 
 
 @pytest.fixture
-def new_user_payload() -> dict[str, str]:
-    return generate_user_payload()
+def created_user(user_api: UserApi) -> dict[str, str]:
+    payload = generate_user_payload()
 
-
-@pytest.fixture
-def created_user(user_api: UserApi, new_user_payload: dict[str, str]) -> dict[str, str]:
     with allure.step("Create user for test setup"):
-        response = user_api.create_user(new_user_payload)
+        response = user_api.create_user(payload)
         body = response.json()
 
     access_token = body["accessToken"]
-    data = {"access_token": access_token, **new_user_payload}
+    data = {"access_token": access_token, **payload}
 
     yield data
 
     with allure.step("Delete user during teardown"):
         user_api.delete_user(access_token)
-
-
-@pytest.fixture
-def registered_user(user_api: UserApi, new_user_payload: dict[str, str]) -> dict[str, str]:
-    with allure.step("Register user for test setup"):
-        response = user_api.create_user(new_user_payload)
-        body = response.json()
-
-    data = {"response": response, "body": body, **new_user_payload, "access_token": body["accessToken"]}
-
-    yield data
-
-    with allure.step("Delete registered user during teardown"):
-        user_api.delete_user(data["access_token"])
 
 
 @pytest.fixture
